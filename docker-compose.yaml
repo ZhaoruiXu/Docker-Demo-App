@@ -1,27 +1,28 @@
-version: '3'
+version: "3"
 services:
-  # my-app:
-  # image: ${docker-registry}/my-app:1.0
-  # ports:
-  # - 3000:3000
-  mongodb:
-    image: mongo
+  my-app:
+    image: 947795292777.dkr.ecr.us-west-2.amazonaws.com/my-app:1.4
     ports:
-      - 27017:27017
-    environment:
+      - 3000:3000 # since its our own app, the CONTAINER PORT we assigned was 3000 in the server.js, and now we just need to bind it to the HOST PORT
+  mongodb: # container name
+    image: mongo # image name and you can specify the TAG (version) here too
+    ports:
+      - 27017:27017 # port binding HOST(local)PORT:CONTAINER PORT
+    environment: # env variables
       - MONGO_INITDB_ROOT_USERNAME=admin
       - MONGO_INITDB_ROOT_PASSWORD=password
     volumes:
-      - mongo-data:/data/db
+      - mongo-data:/data/db # /data/db is MongoDB specific data path, mysql:var/lib/mysql, postgres:var/lib/postgresql/data
   mongo-express:
-    image: mongo-express
-    restart: always # fixes MongoNetworkError when mongodb is not ready when mongo-express starts
+    image: mongo-express # since this image is from Docker Hub, the registry domain can be skipped (docker.io/library/mongo is the full address)
     ports:
-      - 8080:8081
+      - 8081:8081
+    # fixes MongoNetworkError when mongodb is not ready when mongo-express starts
+    restart: unless-stopped # required as the mongodb and the mongo-express service should not be started at the same time, because the mongo-express depends on the mongodb container. You can ensure the database running, before the express server starts with the following changes to the compose file.
     environment:
       - ME_CONFIG_MONGODB_ADMINUSERNAME=admin
       - ME_CONFIG_MONGODB_ADMINPASSWORD=password
       - ME_CONFIG_MONGODB_SERVER=mongodb
-volumes:
-  mongo-data:
-    driver: local
+volumes: # define all volumes here, so can use them in the containers under services
+  mongo-data: # the name we create, can be named anything
+    driver: local # for docker to create the local physical storage path
